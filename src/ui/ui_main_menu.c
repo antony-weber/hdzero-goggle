@@ -18,6 +18,7 @@
 #include "ui/page_focus_chart.h"
 #include "ui/page_headtracker.h"
 #include "ui/page_imagesettings.h"
+#include "ui/page_modulebay.h"
 #include "ui/page_playback.h"
 #include "ui/page_power.h"
 #include "ui/page_record.h"
@@ -47,6 +48,7 @@ static page_pack_t *page_packs[] = {
     &pp_record,
     &pp_autoscan,
     &pp_connections,
+    &pp_modulebay,
     &pp_headtracker,
     &pp_playback,
     &pp_version,
