@@ -490,11 +490,15 @@ static void *thread_input_device(void *ptr) {
             case SDL_KEYDOWN:
                 switch (event.key.keysym.sym) {
                 case SDLK_d:
-                    btn_d_start = event.key.timestamp;
+                    if (!btn_d_start) {
+                        btn_d_start = event.key.timestamp;
+                    }
                     break;
 
                 case SDLK_a:
-                    btn_a_start = event.key.timestamp;
+                    if (!btn_a_start) {
+                        btn_a_start = event.key.timestamp;
+                    }
                     break;
                 }
                 break;
@@ -519,6 +523,7 @@ static void *thread_input_device(void *ptr) {
                         btn_click();
                         g_key = DIAL_KEY_CLICK;
                     }
+                    btn_d_start = 0;
                     break;
 
                 case SDLK_a:
@@ -529,6 +534,7 @@ static void *thread_input_device(void *ptr) {
                         rbtn_click(true);
                         g_key = RIGHT_KEY_CLICK;
                     }
+                    btn_a_start = 0;
                     break;
                 }
                 break;

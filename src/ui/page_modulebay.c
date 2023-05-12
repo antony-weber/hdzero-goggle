@@ -155,6 +155,7 @@ page_pack_t pp_modulebay = {
         .max = 3,
     },
 
+    .name = "Module Bay",
     .create = page_create,
     .enter = NULL,
     .exit = page_exit,
