@@ -28,7 +28,7 @@ static void send_command(uint8_t *bytes, uint8_t length) {
 
     // we try a few times becasue the software uart is not super accurate at 115200 baud!
     // logic analyser show that 2nd or 3rd packet after delay is correct, but let it be 5 for stable result
-    for (int i=0; i<5 ; i++) {
+    for (int i=0; i<10 ; i++) {
         uart_write(uart_fd, bytes, length);
         usleep(1000);
     }

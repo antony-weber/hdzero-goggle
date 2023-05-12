@@ -9,6 +9,7 @@
 #include "core/battery.h"
 #include "core/common.hh"
 #include "core/settings.h"
+#include "module/module.h"
 #include "driver/dm5680.h"
 #include "driver/mcp3021.h"
 #include "page_common.h"
@@ -241,6 +242,11 @@ static void page_power_on_click(uint8_t key, int sel) {
             g_setting.power.power_ana = btn_group_get_sel(&btn_group_power_ana);
             ini_putl("power", "power_ana_rx", g_setting.power.power_ana, SETTING_INI);
             DM5680_Power_AnalogModule(g_setting.power.power_ana);
+            if (g_setting.power.power_ana == 0) {
+                module_init();
+            } else {
+                module_close();
+            }
         }
         break;
 

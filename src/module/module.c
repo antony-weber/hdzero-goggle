@@ -17,25 +17,29 @@ static module_def_t *modules[] = {
 static module_def_t *module = NULL;
 
 void module_init() {
-    module = modules[g_setting.module.type];
-    if (module) {
-        if (g_setting.module.channel > module->num_channels)
-            g_setting.module.channel = 1;
-        module->init();
+    if (getHwRevision() == HW_REV_1 || g_setting.power.power_ana == 0) {
+        module = modules[g_setting.module.type];
+        if (module) {
+            if (g_setting.module.channel > module->num_channels)
+                g_setting.module.channel = 1;
+            module->init();
+        }
     }
 }
 
 void module_set_mode() {
-    module = modules[g_setting.module.type];
-    if (module) {
-        if (g_setting.module.channel > module->num_channels)
-            g_setting.module.channel = 1;
-        module->set_mode();
+    if (getHwRevision() == HW_REV_1 || g_setting.power.power_ana == 0) {
+        module = modules[g_setting.module.type];
+        if (module) {
+            if (g_setting.module.channel > module->num_channels)
+                g_setting.module.channel = 1;
+            module->set_mode();
+        }
     }
 }
 
 void module_close() {
-    if (module)
+    if (module && (getHwRevision() == HW_REV_1 || g_setting.power.power_ana != 0))
         module->close();
 }
 
