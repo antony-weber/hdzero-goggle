@@ -4,20 +4,19 @@
 #include "defines.h"
 #include "ui/ui_style.h"
 
-#define TMP_DIR         "/tmp"
-#define MEDIA_FILES_DIR "/mnt/extsd/movies"
-#define AUDIO_SEL_SH    "/mnt/app/script/audio_sel.sh"
-#define SETTING_INI     "/mnt/app/setting.ini"
-#define TEST_INI        "/mnt/extsd/test.ini"
-#define REC_START       "/mnt/app/app/record/gogglecmd -rec start"
-#define REC_STOP        "/mnt/app/app/record/gogglecmd -rec stop"
-#define REC_STOP_LIVE   "/mnt/app/app/record/gogglecmd -rec stopl"
-#define REC_CONF        "/mnt/app/app/record/confs/record.conf"
-#define WIFI_AP_ON      "/mnt/app/script/wlan_start_ap.sh"
-#define WIFI_AP_OFF     "/mnt/app/script/wlan_stop_ap.sh"
-#define WIFI_STA_ON     "/mnt/app/script/wlan_start_sta.sh"
-#define WIFI_STA_OFF    "/mnt/app/script/wlan_stop_sta.sh"
-#define WIFI_SSID_FILE  "/mnt/extsd/ssid.txt"
+#define TMP_DIR             "/tmp"
+#define MEDIA_FILES_DIR     "/mnt/extsd/movies"
+#define AUDIO_SEL_SH        "/mnt/app/script/audio_sel.sh"
+#define SETTING_INI_VERSION 1
+#define SETTING_INI         "/mnt/app/setting.ini"
+#define TEST_INI            "/mnt/extsd/test.ini"
+#define REC_START           "/mnt/app/app/record/gogglecmd -rec start"
+#define REC_STOP            "/mnt/app/app/record/gogglecmd -rec stop"
+#define REC_STOP_LIVE       "/mnt/app/app/record/gogglecmd -rec stopl"
+#define REC_CONF            "/mnt/app/app/record/confs/record.conf"
+#define WIFI_OFF            "/mnt/app/script/wlan_stop.sh"
+#define WIFI_AP_ON          "/tmp/wlan_start_ap.sh"
+#define WIFI_STA_ON         "/tmp/wlan_start_sta.sh"
 
 #define FC_OSD_LOCAL_PATH  "/mnt/app/resource/OSD/FC/"
 #define FC_OSD_SDCARD_PATH "/mnt/extsd/resource/OSD/FC/"
@@ -70,10 +69,10 @@ typedef enum {
     SOURCE_HDMI_IN = 1,
     SOURCE_AV_IN = 2,
     SOURCE_EXPANSION = 3
-} source_info_source_t;
+} source_t;
 
 typedef struct _source_info {
-    source_info_source_t source;
+    source_t source;
     uint8_t hdmi_in_status; // 0=not detected, 1= detected
     uint8_t av_in_status;   // 0=not detected, 1= detected
     uint8_t av_bay_status;  // 0=not detected, 1= detected
@@ -91,10 +90,12 @@ typedef struct {
     btn_with_arr_t btn_a[6];
     int valid;
     int current;
+    lv_obj_t *label;
 } btn_group_t;
 
 typedef struct {
     lv_obj_t *slider;
+    lv_obj_t *name;
     lv_obj_t *label;
 } slider_group_t;
 
@@ -128,30 +129,38 @@ int create_text(struct menu_obj_s *s, lv_obj_t *parent, bool is_icon, const char
 
 void create_slider_item(slider_group_t *slider_group, lv_obj_t *parent, const char *name, int range, int default_value, int row);
 
+void create_slider_item_compact(slider_group_t *slider_group, lv_obj_t *parent, const char *name, int range, int default_value, int row, const lv_font_t *font);
+
+void update_slider_item_with_value(slider_group_t *slider_group, int value);
+
 void create_btn_item(lv_obj_t *parent, const char *name, int col, int row);
 
-lv_obj_t *create_dropdown_item(lv_obj_t *parent, const char *options, int col, int row);
+lv_obj_t *create_dropdown_item(lv_obj_t *parent, const char *options, int col, int row, int width, int height, int col_span, int pad_top, lv_grid_align_t column_align, const lv_font_t *font);
+
+lv_obj_t *create_label_item_compact(lv_obj_t *parent, const char *name, int col, int row, int cols, int height, lv_text_align_t text_align, lv_grid_align_t col_align, const lv_font_t *font);
+
+lv_obj_t *create_msgbox_item(lv_obj_t *parent, const char *title, const char *message);
 
 lv_obj_t *create_label_item(lv_obj_t *parent, const char *name, int col, int row, int cols);
 
 lv_obj_t *create_info_item(lv_obj_t *parent, const char *name, int col, int row, int cols);
 
+void create_btn_group_item_compact(btn_group_t *btn_group, lv_obj_t *parent, int count, const char *name, const char *name0, const char *name1,
+                                   const char *name2, const char *name3, int row, int height, int arrow_scale_percent, const lv_font_t *font);
 void create_btn_group_item(btn_group_t *btn_group, lv_obj_t *parent, int count, const char *name, const char *name0, const char *name1,
                            const char *name2, const char *name3, int row);
 
 void create_btn_group_item2(btn_group_t *btn_group, lv_obj_t *parent, int count, const char *name, const char *name0, const char *name1,
                             const char *name2, const char *name3, const char *name4, const char *name5, int row);
 
-void display_btn_group(btn_group_t *btn_group, bool show);
-
-void set_select_item(const panel_arr_t *arr, int row);
+void btn_group_set_sel(btn_group_t *btn_group, int sel);
+int btn_group_get_sel(btn_group_t *btn_group);
+void btn_group_toggle_sel(btn_group_t *btn_group);
 
 void create_select_item(panel_arr_t *arr, lv_obj_t *parent);
+void set_select_item(const panel_arr_t *arr, int row);
 
-void btn_group_set_sel(btn_group_t *btn_group, int sel);
-
-int btn_group_get_sel(btn_group_t *btn_group);
-
-void btn_group_toggle_sel(btn_group_t *btn_group);
+void slider_show(slider_group_t *slider_group, bool visible);
+void btn_group_show(btn_group_t *btn_group, bool visible);
 
 #endif

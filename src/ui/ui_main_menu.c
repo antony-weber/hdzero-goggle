@@ -13,19 +13,23 @@
 #include "ui/page_autoscan.h"
 #include "ui/page_clock.h"
 #include "ui/page_common.h"
-#include "ui/page_connections.h"
+#include "ui/page_elrs.h"
 #include "ui/page_fans.h"
 #include "ui/page_focus_chart.h"
 #include "ui/page_headtracker.h"
 #include "ui/page_imagesettings.h"
 #include "ui/page_modulebay.h"
+#include "ui/page_osd.h"
 #include "ui/page_playback.h"
 #include "ui/page_power.h"
 #include "ui/page_record.h"
 #include "ui/page_scannow.h"
+#include "ui/page_sleep.h"
 #include "ui/page_source.h"
 #include "ui/page_version.h"
+#include "ui/page_wifi.h"
 #include "ui/ui_image_setting.h"
+#include "ui/ui_keyboard.h"
 #include "ui/ui_porting.h"
 #include "ui/ui_style.h"
 
@@ -43,18 +47,20 @@ static page_pack_t *page_packs[] = {
     &pp_scannow,
     &pp_source,
     &pp_imagesettings,
+    &pp_osd,
     &pp_power,
     &pp_modulebay,
     &pp_fans,
     &pp_record,
     &pp_autoscan,
-    &pp_connections,
-    &pp_modulebay,
+    &pp_elrs,
+    &pp_wifi,
     &pp_headtracker,
     &pp_playback,
     &pp_version,
     &pp_focus_chart,
-    &pp_clock
+    &pp_clock,
+    &pp_sleep,
 };
 
 #define PAGE_COUNT (sizeof(page_packs) / sizeof(page_packs[0]))
@@ -141,6 +147,22 @@ void submenu_roller(uint8_t key) {
     }
 }
 
+// the submenu pages called on_roller event handler has to update
+// the selection by setting pp->p_arr.cur if a selection change is needed
+void submenu_roller_no_selection_change(uint8_t key) {
+    page_pack_t *pp = find_pp(lv_menu_get_cur_main_page(menu));
+    if (!pp) {
+        return;
+    }
+
+    if (pp->on_roller) {
+        // if your page as a roller event handler, call it
+        pp->on_roller(key);
+    }
+
+    set_select_item(&pp->p_arr, pp->p_arr.cur);
+}
+
 void submenu_exit() {
     LOGI("submenu_exit");
     app_state_push(APP_STATE_MAINMENU);
@@ -173,7 +195,7 @@ void submenu_click(void) {
         pp->on_click(DIAL_KEY_CLICK, pp->p_arr.cur);
     }
 
-    if (pp->p_arr.max) {
+    if (pp->p_arr.max && g_app_state != APP_STATE_WIFI) {
         // if we have selectable icons, check if we hit the back button
         if (pp->p_arr.cur == pp->p_arr.max - 1) {
             submenu_exit();
@@ -289,6 +311,9 @@ void main_menu_init(void) {
     lv_obj_add_flag(progress_bar.bar, LV_OBJ_FLAG_HIDDEN);
     progress_bar.start = 0;
     progress_bar.val = 0;
+
+    // Create Keyboard Object
+    keyboard_init();
 }
 
 void progress_bar_update() {

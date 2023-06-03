@@ -9,8 +9,9 @@
 
 #include "core/self_test.h"
 #include "ui/page_common.h"
-#include "ui/page_connections.h"
 #include "util/file.h"
+
+#define SETTINGS_INI_VERSION_UNKNOWN 0
 
 setting_t g_setting;
 bool g_test_en = false;
@@ -32,14 +33,12 @@ const setting_t g_setting_defaults = {
     },
     .power = {
         .voltage = 35,
+        .display_voltage = true,
         .warning_type = SETTING_POWER_WARNING_TYPE_BOTH,
         .cell_count_mode = SETTING_POWER_CELL_COUNT_MODE_AUTO,
         .cell_count = 2,
         .osd_display_mode = SETTING_POWER_OSD_DISPLAY_MODE_TOTAL,
         .power_ana = false,
-    },
-    .source = {
-        .analog_format = SETTING_SOURCES_ANALOG_FORMAT_PAL
     },
     .record = {
         .mode_manual = false,
@@ -49,11 +48,11 @@ const setting_t g_setting_defaults = {
         .audio_source = SETTING_RECORD_AUDIO_SOURCE_MIC,
     },
     .image = {
-        .oled = 7,
-        .brightness = 0,
-        .saturation = 0,
-        .contrast = 0,
-        .auto_off = 2,
+        .oled = 8,
+        .brightness = 39,
+        .saturation = 16,
+        .contrast = 16,
+        .auto_off = 1,
     },
     .ht = {
         .enable = false,
@@ -66,9 +65,6 @@ const setting_t g_setting_defaults = {
         .gyr_z = 0,
     },
     .elrs = {
-        .enable = false,
-    },
-    .wifi = {
         .enable = false,
     },
     .ease = {
@@ -101,6 +97,11 @@ const setting_t g_setting_defaults = {
             {
                 .show = true,
                 .position = {.mode_4_3 = {.x = 320, .y = 0}, .mode_16_9 = {.x = 160, .y = 0}},
+            },
+            // OSD_GOGGLE_BATTERY_VOLTAGE
+            {
+                .show = true,
+                .position = {.mode_4_3 = {.x = 360, .y = 0}, .mode_16_9 = {.x = 200, .y = 0}},
             },
             // OSD_GOGGLE_CHANNEL
             {
@@ -163,11 +164,63 @@ const setting_t g_setting_defaults = {
         .sec = 30,
         .format = 0,
     },
-	.module = {
+    .module = {
         .channel = 1,
         .type = 0,
         .setting = 0,
-    }};
+    },
+    .wifi = {
+        .enable = false,
+        .mode = 0,
+        .clientid = {""},
+        .ssid = {"HDZero", "MySSID"},
+        .passwd = {"divimath", "MyPassword"},
+        .dhcp = true,
+        .ip_addr = "192.168.2.122",
+        .netmask = "255.255.255.0",
+        .gateway = "192.168.2.1",
+        .dns = "192.168.2.1",
+        .rf_channel = 6,
+    },
+};
+
+int settings_put_osd_element_shown(bool show, char *config_name) {
+    char setting_key[128];
+
+    sprintf(setting_key, "element_%s_show", config_name);
+    return settings_put_bool("osd", setting_key, show);
+}
+
+int settings_put_osd_element_pos_x(const setting_osd_goggle_element_positions_t *pos, char *config_name) {
+    char setting_key[128];
+    int ret = 0;
+
+    sprintf(setting_key, "element_%s_pos_4_3_x", config_name);
+    ret = ini_putl("osd", setting_key, pos->mode_4_3.x, SETTING_INI);
+    sprintf(setting_key, "element_%s_pos_16_9_x", config_name);
+    ret &= ini_putl("osd", setting_key, pos->mode_16_9.x, SETTING_INI);
+    return ret;
+}
+
+int settings_put_osd_element_pos_y(const setting_osd_goggle_element_positions_t *pos, char *config_name) {
+    char setting_key[128];
+    int ret = 0;
+
+    sprintf(setting_key, "element_%s_pos_4_3_y", config_name);
+    ret = ini_putl("osd", setting_key, pos->mode_4_3.y, SETTING_INI);
+    sprintf(setting_key, "element_%s_pos_16_9_y", config_name);
+    ret &= ini_putl("osd", setting_key, pos->mode_16_9.y, SETTING_INI);
+    return ret;
+}
+
+int settings_put_osd_element(const setting_osd_goggle_element_t *element, char *config_name) {
+    int ret = 0;
+
+    ret = settings_put_osd_element_shown(element->show, config_name);
+    ret &= settings_put_osd_element_pos_x(&element->position, config_name);
+    ret &= settings_put_osd_element_pos_y(&element->position, config_name);
+    return ret;
+}
 
 static void settings_load_osd_element(setting_osd_goggle_element_t *element, char *config_name, const setting_osd_goggle_element_t *defaults) {
     char buf[128];
@@ -199,15 +252,36 @@ int settings_put_bool(char *section, char *key, bool value) {
     return ini_puts(section, key, value ? "true" : "false", SETTING_INI);
 }
 
-void settings_load(void) {
+void settings_reset(void) {
+    char buf[256];
+
+    sprintf(buf, "rm -f %s", SETTING_INI);
+    system(buf);
+    usleep(50);
+
+    sprintf(buf, "touch %s", SETTING_INI);
+    system(buf);
+    usleep(50);
+
+    ini_putl("settings", "file_version", SETTING_INI_VERSION, SETTING_INI);
+}
+
+void settings_init(void) {
+    // check if backup of old settings file exists after goggle update
     if (file_exists("/mnt/UDISK/setting.ini")) {
-        char str[128];
-        sprintf(str, "cp -f /mnt/UDISK/setting.ini %s", SETTING_INI);
-        system(str);
+        char buf[256];
+        sprintf(buf, "cp -f /mnt/UDISK/setting.ini %s", SETTING_INI);
+        system(buf);
         usleep(10);
         system("rm /mnt/UDISK/setting.ini");
     }
 
+    int file_version = ini_getl("settings", "file_version", SETTINGS_INI_VERSION_UNKNOWN, SETTING_INI);
+    if (file_version != SETTING_INI_VERSION)
+        settings_reset();
+}
+
+void settings_load(void) {
     // scan
     g_setting.scan.channel = ini_getl("scan", "channel", g_setting_defaults.scan.channel, SETTING_INI);
 
@@ -232,6 +306,7 @@ void settings_load(void) {
     settings_load_osd_element(&g_setting.osd.element[OSD_GOGGLE_VTX_TEMP], "vtx_temp", &g_setting_defaults.osd.element[OSD_GOGGLE_VTX_TEMP]);
     settings_load_osd_element(&g_setting.osd.element[OSD_GOGGLE_VRX_TEMP], "vrx_temp", &g_setting_defaults.osd.element[OSD_GOGGLE_VRX_TEMP]);
     settings_load_osd_element(&g_setting.osd.element[OSD_GOGGLE_BATTERY_LOW], "battery_low", &g_setting_defaults.osd.element[OSD_GOGGLE_BATTERY_LOW]);
+    settings_load_osd_element(&g_setting.osd.element[OSD_GOGGLE_BATTERY_VOLTAGE], "battery_voltage", &g_setting_defaults.osd.element[OSD_GOGGLE_BATTERY_VOLTAGE]);
     settings_load_osd_element(&g_setting.osd.element[OSD_GOGGLE_CHANNEL], "channel", &g_setting_defaults.osd.element[OSD_GOGGLE_CHANNEL]);
     settings_load_osd_element(&g_setting.osd.element[OSD_GOGGLE_SD_REC], "sd_rec", &g_setting_defaults.osd.element[OSD_GOGGLE_SD_REC]);
     settings_load_osd_element(&g_setting.osd.element[OSD_GOGGLE_VLQ], "vlq", &g_setting_defaults.osd.element[OSD_GOGGLE_VLQ]);
@@ -287,21 +362,22 @@ void settings_load(void) {
     g_setting.clock.sec = ini_getl("clock", "sec", g_setting_defaults.clock.sec, SETTING_INI);
     g_setting.clock.format = ini_getl("clock", "format", g_setting_defaults.clock.format, SETTING_INI);
 
-    // disable wifi on boot
-    g_setting.wifi.enable = false;
-    settings_put_bool("wifi", "enable", g_setting.wifi.enable);
-    if (file_exists(WIFI_SSID_FILE)) {
-        ini_gets("wifi", "ssid", "HDZero", g_setting.wifi.ssid, 16, WIFI_SSID_FILE);
-        ini_gets("wifi", "passwd", "divimath", g_setting.wifi.passwd, 16, WIFI_SSID_FILE);
-        ini_puts("wifi", "ssid", g_setting.wifi.ssid, SETTING_INI);
-        ini_puts("wifi", "passwd", g_setting.wifi.passwd, SETTING_INI); // passwd length is 8+
-    } else {
-        ini_gets("wifi", "ssid", "HDZero", g_setting.wifi.ssid, 16, SETTING_INI);
-        ini_gets("wifi", "passwd", "divimath", g_setting.wifi.passwd, 16, SETTING_INI);
-    }
-    update_hostpad_conf();
+    // wifi
+    g_setting.wifi.enable = settings_get_bool("wifi", "enable", g_setting_defaults.wifi.enable);
+    g_setting.wifi.mode = ini_getl("wifi", "mode", g_setting_defaults.wifi.mode, SETTING_INI);
+    ini_gets("wifi", "clientid", g_setting_defaults.wifi.clientid, g_setting.wifi.clientid, WIFI_CLIENTID_MAX, SETTING_INI);
+    ini_gets("wifi", "ap_ssid", g_setting_defaults.wifi.ssid[0], g_setting.wifi.ssid[0], WIFI_SSID_MAX, SETTING_INI);
+    ini_gets("wifi", "ap_passwd", g_setting_defaults.wifi.passwd[0], g_setting.wifi.passwd[0], WIFI_PASSWD_MAX, SETTING_INI);
+    ini_gets("wifi", "sta_ssid", g_setting_defaults.wifi.ssid[1], g_setting.wifi.ssid[1], WIFI_SSID_MAX, SETTING_INI);
+    ini_gets("wifi", "sta_passwd", g_setting_defaults.wifi.passwd[1], g_setting.wifi.passwd[1], WIFI_PASSWD_MAX, SETTING_INI);
+    g_setting.wifi.dhcp = settings_get_bool("wifi", "dhcp", g_setting_defaults.wifi.dhcp);
+    ini_gets("wifi", "ip_addr", g_setting_defaults.wifi.ip_addr, g_setting.wifi.ip_addr, WIFI_NETWORK_MAX, SETTING_INI);
+    ini_gets("wifi", "netmask", g_setting_defaults.wifi.netmask, g_setting.wifi.netmask, WIFI_NETWORK_MAX, SETTING_INI);
+    ini_gets("wifi", "gateway", g_setting_defaults.wifi.gateway, g_setting.wifi.gateway, WIFI_NETWORK_MAX, SETTING_INI);
+    ini_gets("wifi", "dns", g_setting_defaults.wifi.dns, g_setting.wifi.dns, WIFI_NETWORK_MAX, SETTING_INI);
+    g_setting.wifi.rf_channel = ini_getl("wifi", "rf_channel", g_setting_defaults.wifi.rf_channel, SETTING_INI);
 
-    // no dial under video mode
+    //  no dial under video mode
     g_setting.ease.no_dial = file_exists(NO_DIAL_FILE);
 
     // module bay
