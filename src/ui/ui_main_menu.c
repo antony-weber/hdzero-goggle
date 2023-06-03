@@ -49,6 +49,7 @@ static page_pack_t *page_packs[] = {
     &pp_record,
     &pp_autoscan,
     &pp_connections,
+    &pp_modulebay,
     &pp_headtracker,
     &pp_playback,
     &pp_version,

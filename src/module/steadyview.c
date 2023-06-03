@@ -31,7 +31,6 @@ static int current_channel = -1;
 static steadyview_mix_mode_t mix_mode = -1;
 
 static const uint32_t periodMicroSec = 100;
-
 static void rtc6705WriteRegister(uint32_t data);
 static uint32_t rtc6705ReadRegister(uint8_t read);
 
