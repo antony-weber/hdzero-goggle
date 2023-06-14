@@ -199,6 +199,11 @@ typedef struct {
 } setting_module_t;
 
 typedef struct {
+    bool logging;
+    bool selftest;
+} setting_storage_t;
+
+typedef struct {
     setting_scan_t scan;
     setting_fan_t fans;
     setting_autoscan_t autoscan;
@@ -213,10 +218,10 @@ typedef struct {
     setting_clock_t clock;
     ease_use_t ease;
     setting_module_t module;
+    setting_storage_t storage;
 } setting_t;
 
 extern setting_t g_setting;
-extern bool g_test_en;
 extern const setting_t g_setting_defaults;
 
 void settings_reset(void);

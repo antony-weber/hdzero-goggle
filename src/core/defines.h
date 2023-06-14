@@ -1,14 +1,7 @@
-#ifndef __DEFINES_H
-#define __DEFINES_H
+#pragma once
 
-typedef enum {
-    LEFT_DAIL_UP = 1,
-    LEFT_DAIL_DOWN = 2,
-    LEFT_DAIL_CLICK = 3,
-    LEFT_DAIL_LONGPRESS = 4
-} left_dial_t;
-
-#define DIAL_SENSITIVITY 1  // slow down rate =  DIAL_SENSITIVITY+1
+#define DIAL_SENSITIVITY 1    // number of clicks before dial event is triggered
+#define DIAL_SENSITIVTY_TIMEOUT_MS 1000 // ms
 #define CHANNEL_SHOWTIME 30 // must <= 127
 
 #define GPIO_BEEP 131
@@ -31,4 +24,8 @@ typedef enum {
 #define DEV_SPI_VRX_L     "/dev/mtd9"
 #define DEV_SPI_VA        "/dev/mtd10"
 
-#endif //__DEFINES_H
+#define SELF_TEST_FILE "/mnt/extsd/self_test.txt"
+#define NO_DIAL_FILE   "/mnt/extsd/no_dial.txt"
+#define APP_LOG_FILE   "/mnt/extsd/HDZGOGGLE.log"
+#define APP_BIN_FILE   "/mnt/extsd/HDZGOGGLE"
+#define DEVELOP_SCRIPT "/mnt/extsd/develop.sh"

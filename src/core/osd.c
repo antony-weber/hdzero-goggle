@@ -34,6 +34,9 @@
 #include "ui/ui_image_setting.h"
 #include "ui/ui_porting.h"
 
+extern const lv_font_t conthrax_26;
+extern const lv_font_t robotomono_26;
+
 //////////////////////////////////////////////////////////////////
 // local
 static sem_t osd_semaphore;
@@ -287,7 +290,16 @@ static void osd_object_create_label(uint8_t fhd, lv_obj_t **obj, char *text, set
     osd_object_set_pos(fhd, *obj, pos);
 
     lv_obj_set_style_text_color(*obj, lv_color_make(255, 255, 255), 0);
-    lv_obj_set_style_text_font(*obj, &lv_font_montserrat_26, 0);
+
+    if (0 == strncmp(fc_variant, "ARDU", sizeof(fc_variant)) ||
+        0 == strncmp(fc_variant, "BTFL", sizeof(fc_variant)) ||
+        0 == strncmp(fc_variant, "INAV", sizeof(fc_variant))) {
+        lv_obj_set_style_text_font(*obj, &conthrax_26, 0);
+    } else if (0 == strncmp(fc_variant, "QUIC", sizeof(fc_variant))) {
+        lv_obj_set_style_text_font(*obj, &robotomono_26, 0);
+    } else {
+        lv_obj_set_style_text_font(*obj, &lv_font_montserrat_26, 0);
+    }
 }
 
 void osd_show(bool show) {
@@ -405,7 +417,7 @@ void osd_show_all_elements() {
     else
         lv_obj_add_flag(g_osd_hdzero.ant3[is_fhd], LV_OBJ_FLAG_HIDDEN);
 
-    if (!g_test_en)
+    if (!g_setting.storage.selftest)
         return;
 
     if (g_setting.osd.element[OSD_GOGGLE_TEMP_TOP].show)
@@ -550,7 +562,7 @@ void osd_hdzero_update(void) {
     else
         lv_obj_add_flag(g_osd_hdzero.ant3[is_fhd], LV_OBJ_FLAG_HIDDEN);
 
-    if (g_test_en) {
+    if (g_setting.storage.selftest) {
         sprintf(buf, "T:%d-%d", fan_speeds[2], g_temperature.top / 10);
         lv_label_set_text(g_osd_hdzero.osd_tempe[is_fhd][0], buf);
 
@@ -623,7 +635,7 @@ static void embedded_osd_init(uint8_t fhd) {
     osd_object_create_img(fhd, &g_osd_hdzero.ant2[fhd], buf, &g_setting.osd.element[OSD_GOGGLE_ANT2].position, so);
     osd_object_create_img(fhd, &g_osd_hdzero.ant3[fhd], buf, &g_setting.osd.element[OSD_GOGGLE_ANT3].position, so);
 
-    if (g_test_en) {
+    if (g_setting.storage.selftest) {
         osd_object_create_label(fhd, &g_osd_hdzero.osd_tempe[fhd][0], "TOP:-.- oC", &g_setting.osd.element[OSD_GOGGLE_TEMP_TOP].position, so);
         osd_object_create_label(fhd, &g_osd_hdzero.osd_tempe[fhd][1], "LEFT:-.- oC", &g_setting.osd.element[OSD_GOGGLE_TEMP_LEFT].position, so);
         osd_object_create_label(fhd, &g_osd_hdzero.osd_tempe[fhd][2], "RIGHT:-.- oC", &g_setting.osd.element[OSD_GOGGLE_TEMP_RIGHT].position, so);
@@ -644,7 +656,7 @@ void osd_update_element_positions() {
     osd_object_set_pos(is_fhd, g_osd_hdzero.ant1[is_fhd], &g_setting.osd.element[OSD_GOGGLE_ANT1].position);
     osd_object_set_pos(is_fhd, g_osd_hdzero.ant2[is_fhd], &g_setting.osd.element[OSD_GOGGLE_ANT2].position);
     osd_object_set_pos(is_fhd, g_osd_hdzero.ant3[is_fhd], &g_setting.osd.element[OSD_GOGGLE_ANT3].position);
-    if (g_test_en) {
+    if (g_setting.storage.selftest) {
         osd_object_set_pos(is_fhd, g_osd_hdzero.osd_tempe[is_fhd][0], &g_setting.osd.element[OSD_GOGGLE_TEMP_TOP].position);
         osd_object_set_pos(is_fhd, g_osd_hdzero.osd_tempe[is_fhd][1], &g_setting.osd.element[OSD_GOGGLE_TEMP_LEFT].position);
         osd_object_set_pos(is_fhd, g_osd_hdzero.osd_tempe[is_fhd][2], &g_setting.osd.element[OSD_GOGGLE_TEMP_RIGHT].position);

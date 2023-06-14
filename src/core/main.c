@@ -22,6 +22,7 @@
 #include "core/settings.h"
 #include "core/thread.h"
 #include "driver/TP2825.h"
+#include "driver/beep.h"
 #include "driver/dm5680.h"
 #include "driver/esp32.h"
 #include "driver/fans.h"
@@ -37,6 +38,7 @@
 #include "ui/page_power.h"
 #include "ui/page_scannow.h"
 #include "ui/page_source.h"
+#include "ui/page_storage.h"
 #include "ui/ui_image_setting.h"
 #include "ui/ui_main_menu.h"
 #include "ui/ui_osd_element_pos.h"
@@ -159,6 +161,7 @@ int main(int argc, char *argv[]) {
     elrs_init();
     ht_init();
     module_init();
+    beep_init();
 
     // 4. Initilize UI
     lvgl_init();
@@ -185,10 +188,10 @@ int main(int argc, char *argv[]) {
     start_running();
     create_threads();
 
-    // synthetic counter for gif refresh
+    // 8. Synthetic counter for gif refresh
     gif_cnt = 0;
 
-    // 8. Execute main loop
+    // 10. Execute main loop
     g_init_done = 1;
     for (;;) {
         pthread_mutex_lock(&lvgl_mutex);
