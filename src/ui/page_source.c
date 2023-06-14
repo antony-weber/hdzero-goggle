@@ -143,6 +143,7 @@ static void page_source_on_click(uint8_t key, int sel) {
         break;
 
     case 4: // Analog video format
+        //TODO: if analog power auto switch analog power on
         btn_group_toggle_sel(&btn_group0);
         g_setting.source.analog_format = btn_group_get_sel(&btn_group0);
         ini_putl("source", "analog_format", g_setting.source.analog_format, SETTING_INI);

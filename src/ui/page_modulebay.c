@@ -36,7 +36,7 @@ void show_module_settings(int mode) {
     case MODULE_STEADYVIEW_X:
         lv_dropdown_set_options(btn_module_mode, "Diversity\nMix 1\nMix 2\nMix 3");
         lv_dropdown_set_selected(btn_module_mode, mode);
-        //steadyview need repower to switch mode, old HW revision can not power cycle analog module
+        // steadyview need repower to switch mode, old HW revision can not power cycle analog module
         if (getHwRevision() >= HW_REV_2 || lv_dropdown_get_selected(btn_module_type) == MODULE_STEADYVIEW_X) {
             lv_obj_clear_flag(btn_module_mode, LV_OBJ_FLAG_HIDDEN);
             lv_obj_clear_flag(lbl_module_mode, LV_OBJ_FLAG_HIDDEN);
@@ -89,13 +89,11 @@ static lv_obj_t *page_create(lv_obj_t *parent, panel_arr_t *arr) {
 
     // create menu entries
     create_label_item(cont, "Type", 1, 0, 1);
-    btn_module_type = create_dropdown_item(cont, "Unknown\nSwitch\nrapidFIRE\nSteadyview\nSteadyview-X", 2, 0);
-    lv_obj_set_size(btn_module_type, 240, 40);
+    btn_module_type = create_dropdown_item(cont, "Unknown\nSwitch\nrapidFIRE\nSteadyview\nSteadyview-X", 2, 0, 240, 40, 1, 4, LV_GRID_ALIGN_START, &lv_font_montserrat_20);
 
     // settings/mode menu entries
     lbl_module_mode = create_label_item(cont, "Mode", 1, 1, 1);
-    btn_module_mode = create_dropdown_item(cont, "None", 2, 1);
-    lv_obj_set_size(btn_module_mode, 240, 40);
+    btn_module_mode = create_dropdown_item(cont, "None", 2, 1, 240, 40, 1, 4, LV_GRID_ALIGN_START, &lv_font_montserrat_20);
 
     // back buttons in possible locations
     back_btn1 = create_label_item(cont, "< Back", 1, 1, 1);

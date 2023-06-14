@@ -415,7 +415,6 @@ void create_btn_group_item(btn_group_t *btn_group, lv_obj_t *parent, int count, 
     lv_obj_set_size(btn_group->label, 320, 60);
     lv_obj_set_grid_cell(btn_group->label, LV_GRID_ALIGN_START, 1, 2,
                          LV_GRID_ALIGN_CENTER, row, 1);
-    btn_group->label = label;
 
     create_btn_with_arrow(parent, &btn_group->btn_a[0], name0, row, 2);
     if (count >= 2) {

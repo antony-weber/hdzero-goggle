@@ -90,7 +90,6 @@ typedef struct {
     btn_with_arr_t btn_a[6];
     int valid;
     int current;
-    lv_obj_t *label;
 } btn_group_t;
 
 typedef struct {
