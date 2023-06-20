@@ -26,6 +26,7 @@
 
 #include "core/app_state.h"
 #include "core/dvr.h"
+#include "core/elrs.h"
 #include "core/settings.h"
 #include "driver/dm6302.h"
 #include "driver/hardware.h"
@@ -95,9 +96,11 @@ void tune_channel(uint8_t action) {
             else
                 channel = g_setting.module.channel;
         } else if (action == DIAL_KEY_CLICK) {
-            g_showRXOSD = !g_showRXOSD;
-            if (g_showRXOSD)
+            g_setting.osd.is_visible = !g_setting.osd.is_visible;
+            if (g_setting.osd.is_visible)
                 channel_osd_mode = CHANNEL_SHOWTIME;
+
+            settings_put_bool("osd", "is_visible", g_setting.osd.is_visible);
         }
     }
 
@@ -119,12 +122,16 @@ void tune_channel(uint8_t action) {
             channel--;
         break;
 
+    case DIAL_KEY_PRESS: // confirm to tune with VTX freq send
     case DIAL_KEY_CLICK: // confirm to tune
         if (g_source_info.source == SOURCE_HDZERO && g_setting.scan.channel != channel) {
             g_setting.scan.channel = channel;
             ini_putl("scan", "channel", g_setting.scan.channel, SETTING_INI);
             dvr_cmd(DVR_STOP);
             app_switch_to_hdzero(true);
+            if (action == DIAL_KEY_PRESS) {
+                msp_channel_update();
+            }
         } else if (g_source_info.source == SOURCE_EXPANSION && g_setting.module.channel != channel) {
             g_setting.module.channel = channel;
             ini_putl("module", "channel", channel, SETTING_INI);
@@ -194,9 +201,12 @@ static void btn_press(void) // long press left key
             break;
         }
         app_state_push(APP_STATE_VIDEO);
-    } else if ((g_app_state == APP_STATE_VIDEO) || (g_app_state == APP_STATE_IMS)) // video -> Main menu
-        app_switch_to_menu();
-    else if (g_app_state == APP_STATE_OSD_ELEMENT_PREV) {
+    } else if ((g_app_state == APP_STATE_VIDEO) || (g_app_state == APP_STATE_IMS)) { // video -> Main menu
+        if (tune_timer && g_source_info.source == SOURCE_HDZERO)
+            tune_channel(DIAL_KEY_PRESS);
+        else
+            app_switch_to_menu();
+    } else if (g_app_state == APP_STATE_OSD_ELEMENT_PREV) {
         ui_osd_element_pos_cancel_and_hide();
         app_switch_to_menu();
     } else if (g_app_state == APP_STATE_PLAYBACK)
@@ -257,7 +267,7 @@ static void btn_click(void) // short press enter key
                g_app_state == PAGE_FAN_SLIDE ||
                g_app_state == PAGE_ANGLE_SLIDE ||
                g_app_state == PAGE_POWER_SLIDE_CELL_COUNT ||
-               g_app_state == PAGE_POWER_SLIDE_CELL_VOLTAGE) {
+               g_app_state == PAGE_POWER_SLIDE_WARNING_CELL_VOLTAGE) {
         submenu_click();
     }
     pthread_mutex_unlock(&lvgl_mutex);
@@ -328,8 +338,8 @@ static void roller_up(void) {
         ht_angle_dec();
     } else if (g_app_state == PAGE_POWER_SLIDE_CELL_COUNT) {
         power_cell_count_dec();
-    } else if (g_app_state == PAGE_POWER_SLIDE_CELL_VOLTAGE) {
-        power_voltage_dec();
+    } else if (g_app_state == PAGE_POWER_SLIDE_WARNING_CELL_VOLTAGE) {
+        power_warning_voltage_dec();
     }
     pthread_mutex_unlock(&lvgl_mutex);
 }
@@ -369,8 +379,8 @@ static void roller_down(void) {
         ht_angle_inc();
     } else if (g_app_state == PAGE_POWER_SLIDE_CELL_COUNT) {
         power_cell_count_inc();
-    } else if (g_app_state == PAGE_POWER_SLIDE_CELL_VOLTAGE) {
-        power_voltage_inc();
+    } else if (g_app_state == PAGE_POWER_SLIDE_WARNING_CELL_VOLTAGE) {
+        power_warning_voltage_inc();
     }
 
     pthread_mutex_unlock(&lvgl_mutex);
